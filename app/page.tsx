@@ -282,6 +282,7 @@ export default function Home() {
   }
 
   async function addExpense() {
+    alert("FUNÇÃO EXECUTOU");
     if (!user) {
       alert("Usuário não encontrado");
       return;
