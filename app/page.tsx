@@ -186,16 +186,22 @@ export default function Home() {
   async function getUser() {
     const {
       data: { user },
+      error,
     } = await supabase.auth.getUser();
-
-    setUser(user);
-
+  
+    console.log("USER:", user);
+    console.log("ERROR:", error);
+  
     if (user) {
+      setUser(user);
+  
       loadExpenses(user.id);
       loadIncomes(user.id);
       loadCardExpenses();
+    } else {
+      alert("Usuário não autenticado");
     }
-  }
+  }}
 
   async function loadExpenses(userId: string) {
     const { data: memberData } = await supabase
