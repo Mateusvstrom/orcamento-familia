@@ -70,49 +70,49 @@ export default function Home() {
     const {
       data: { user: currentUser },
     } = await supabase.auth.getUser();
-    
+  
     if (!currentUser) {
-      alert("Faça login novamente");
+      alert("Usuário não autenticado");
       return;
     }
-
+  
     let { data: memberData } = await supabase
       .from("family_members")
       .select("*")
       .eq("user_id", currentUser.id)
       .single();
-
-      if (!memberData) {
-        const { data: family } = await supabase
-          .from("families")
-          .insert([
-            {
-              name: "Minha Família",
-            },
-          ])
-          .select()
-          .single();
-      
-        if (!family) {
-          alert("Erro ao criar família");
-          return;
-        }
-      
-        await supabase
-          .from("family_members")
-          .insert([
-            {
-              family_id: family.id,
-              user_id: currentUser.id,
-              role: "owner",
-            },
-          ]);
-      
-        memberData = {
-          family_id: family.id,
-        };
+  
+    if (!memberData) {
+      const { data: family } = await supabase
+        .from("families")
+        .insert([
+          {
+            name: "Minha Família",
+          },
+        ])
+        .select()
+        .single();
+  
+      if (!family) {
+        alert("Erro ao criar família");
+        return;
       }
-
+  
+      await supabase
+        .from("family_members")
+        .insert([
+          {
+            family_id: family.id,
+            user_id: currentUser.id,
+            role: "owner",
+          },
+        ]);
+  
+      memberData = {
+        family_id: family.id,
+      };
+    }
+  
     const { error } = await supabase
       .from("expenses")
       .insert([
@@ -125,16 +125,17 @@ export default function Home() {
           date: new Date().toISOString(),
         },
       ]);
-
+  
     if (error) {
       console.log(error);
       alert(error.message);
-    } else {
-      setDescription("");
-      setAmount("");
-
-      loadExpenses(currentUser.id);
+      return;
     }
+  
+    setDescription("");
+    setAmount("");
+  
+    loadExpenses(currentUser.id);
   }
 
   async function deleteExpense(id: string) {
