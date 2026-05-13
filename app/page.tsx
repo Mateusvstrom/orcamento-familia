@@ -3,8 +3,20 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 async function loginAnonimo() {
+  const { data, error } =
+    await supabase.auth.signInAnonymously();
+
+  if (data.user) {
+    setUser(data.user);
+    loadExpenses(data.user.id);
+  }
+
+  if (error) {
+    console.log(error);
+  }
+}
   await supabase.auth.signInAnonymously();
-  window.location.reload();
+  
 }
 
 export default function Home() {
