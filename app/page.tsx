@@ -113,7 +113,7 @@ export default function Home() {
       };
     }
   
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("expenses")
       .insert([
         {
@@ -126,11 +126,15 @@ export default function Home() {
         },
       ]);
   
-    if (error) {
-      console.log(error);
-      alert(error.message);
-      return;
-    }
+      console.log("INSERT DATA:", data);
+      console.log("INSERT ERROR:", error);
+      
+      if (error) {
+        alert(JSON.stringify(error));
+        return;
+      }
+      
+      alert("SALVOU");
   
     setDescription("");
     setAmount("");
