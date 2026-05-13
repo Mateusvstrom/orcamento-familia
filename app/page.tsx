@@ -14,7 +14,6 @@ import {
 export default function Home() {
   const [user, setUser] = useState<any>(null);
 
-  // MOBILE
   const isMobile =
     typeof window !== "undefined" &&
     window.innerWidth < 768;
@@ -22,7 +21,8 @@ export default function Home() {
   // DESPESAS
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState("Casa");
+  const [category, setCategory] =
+    useState("Casa");
 
   // RECEITAS
   const [incomeDescription, setIncomeDescription] =
@@ -35,19 +35,25 @@ export default function Home() {
   const [cardDescription, setCardDescription] =
     useState("");
 
-  const [cardAmount, setCardAmount] = useState("");
+  const [cardAmount, setCardAmount] =
+    useState("");
 
   const [installments, setInstallments] =
     useState("1");
 
   // LISTAS
-  const [expenses, setExpenses] = useState<any[]>([]);
-  const [incomes, setIncomes] = useState<any[]>([]);
-  const [cardExpenses, setCardExpenses] = useState<
+  const [expenses, setExpenses] = useState<
     any[]
   >([]);
 
-  // FILTRO
+  const [incomes, setIncomes] = useState<any[]>(
+    []
+  );
+
+  const [cardExpenses, setCardExpenses] =
+    useState<any[]>([]);
+
+  // DATA
   const currentDate = new Date();
 
   const [selectedMonth, setSelectedMonth] =
@@ -61,7 +67,7 @@ export default function Home() {
   const [selectedYear, setSelectedYear] =
     useState(String(currentDate.getFullYear()));
 
-  // FILTRADOS
+  // FILTROS
   const filteredExpenses = expenses.filter(
     (expense) => {
       const expenseDate = new Date(expense.date);
@@ -81,30 +87,17 @@ export default function Home() {
     }
   );
 
-  const filteredIncomes = incomes.filter((income) => {
-    const incomeDate = new Date(income.date);
-
-    const month = String(
-      incomeDate.getMonth() + 1
-    ).padStart(2, "0");
-
-    const year = String(incomeDate.getFullYear());
-
-    return (
-      month === selectedMonth &&
-      year === selectedYear
-    );
-  });
-
-  const filteredCardExpenses = cardExpenses.filter(
-    (card) => {
-      const cardDate = new Date(card.purchase_date);
+  const filteredIncomes = incomes.filter(
+    (income) => {
+      const incomeDate = new Date(income.date);
 
       const month = String(
-        cardDate.getMonth() + 1
+        incomeDate.getMonth() + 1
       ).padStart(2, "0");
 
-      const year = String(cardDate.getFullYear());
+      const year = String(
+        incomeDate.getFullYear()
+      );
 
       return (
         month === selectedMonth &&
@@ -112,6 +105,26 @@ export default function Home() {
       );
     }
   );
+
+  const filteredCardExpenses =
+    cardExpenses.filter((card) => {
+      const cardDate = new Date(
+        card.purchase_date
+      );
+
+      const month = String(
+        cardDate.getMonth() + 1
+      ).padStart(2, "0");
+
+      const year = String(
+        cardDate.getFullYear()
+      );
+
+      return (
+        month === selectedMonth &&
+        year === selectedYear
+      );
+    });
 
   // TOTAIS
   const totalExpenses = filteredExpenses.reduce(
@@ -146,17 +159,16 @@ export default function Home() {
       categoryTotals[expense.category] = 0;
     }
 
-    categoryTotals[expense.category] += parseFloat(
-      expense.amount
-    );
+    categoryTotals[expense.category] +=
+      parseFloat(expense.amount);
   });
 
-  const chartData = Object.keys(categoryTotals).map(
-    (category) => ({
-      name: category,
-      value: categoryTotals[category],
-    })
-  );
+  const chartData = Object.keys(
+    categoryTotals
+  ).map((category) => ({
+    name: category,
+    value: categoryTotals[category],
+  }));
 
   const COLORS = [
     "#ef5350",
@@ -181,7 +193,7 @@ export default function Home() {
     if (user) {
       loadExpenses(user.id);
       loadIncomes(user.id);
-      loadCardExpenses(user.id);
+      loadCardExpenses();
     }
   }
 
@@ -198,7 +210,9 @@ export default function Home() {
       .from("expenses")
       .select("*")
       .eq("family_id", memberData.family_id)
-      .order("created_at", { ascending: false });
+      .order("created_at", {
+        ascending: false,
+      });
 
     if (data) {
       setExpenses(data);
@@ -218,21 +232,46 @@ export default function Home() {
       .from("incomes")
       .select("*")
       .eq("family_id", memberData.family_id)
-      .order("created_at", { ascending: false });
+      .order("created_at", {
+        ascending: false,
+      });
 
     if (data) {
       setIncomes(data);
     }
   }
 
-  async function loadCardExpenses(userId: string) {
+  async function loadCardExpenses() {
     const { data } = await supabase
       .from("card_transactions")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", {
+        ascending: false,
+      });
 
     if (data) {
       setCardExpenses(data);
+    }
+  }
+
+  async function deleteExpense(id: string) {
+    const confirmDelete = confirm(
+      "Deseja excluir esta despesa?"
+    );
+
+    if (!confirmDelete) return;
+
+    const { error } = await supabase
+      .from("expenses")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      alert(error.message);
+    } else {
+      if (user) {
+        loadExpenses(user.id);
+      }
     }
   }
 
@@ -325,7 +364,7 @@ export default function Home() {
       setCardAmount("");
       setInstallments("1");
 
-      loadCardExpenses(user.id);
+      loadCardExpenses();
     }
   }
 
@@ -346,7 +385,9 @@ export default function Home() {
       >
         <h1
           style={{
-            fontSize: isMobile ? "28px" : "36px",
+            fontSize: isMobile
+              ? "28px"
+              : "36px",
             marginBottom: "20px",
           }}
         >
@@ -369,24 +410,32 @@ export default function Home() {
             onChange={(e) =>
               setSelectedMonth(e.target.value)
             }
-            style={{
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-            }}
+            style={inputStyle}
           >
-            <option value="01">Janeiro</option>
-            <option value="02">Fevereiro</option>
+            <option value="01">
+              Janeiro
+            </option>
+            <option value="02">
+              Fevereiro
+            </option>
             <option value="03">Março</option>
             <option value="04">Abril</option>
             <option value="05">Maio</option>
             <option value="06">Junho</option>
             <option value="07">Julho</option>
             <option value="08">Agosto</option>
-            <option value="09">Setembro</option>
-            <option value="10">Outubro</option>
-            <option value="11">Novembro</option>
-            <option value="12">Dezembro</option>
+            <option value="09">
+              Setembro
+            </option>
+            <option value="10">
+              Outubro
+            </option>
+            <option value="11">
+              Novembro
+            </option>
+            <option value="12">
+              Dezembro
+            </option>
           </select>
 
           <select
@@ -394,11 +443,7 @@ export default function Home() {
             onChange={(e) =>
               setSelectedYear(e.target.value)
             }
-            style={{
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-            }}
+            style={inputStyle}
           >
             <option>2025</option>
             <option>2026</option>
@@ -429,7 +474,7 @@ export default function Home() {
               color: "red",
             },
             {
-              title: "Fatura Cartão",
+              title: "Cartão",
               value: totalCardExpenses,
               color: "#3949ab",
             },
@@ -437,7 +482,9 @@ export default function Home() {
               title: "Saldo",
               value: balance,
               color:
-                balance >= 0 ? "green" : "red",
+                balance >= 0
+                  ? "green"
+                  : "red",
             },
           ].map((card, index) => (
             <div
@@ -476,21 +523,21 @@ export default function Home() {
             marginBottom: "30px",
           }}
         >
-          {/* DESPESA */}
+          {/* DESPESAS */}
           <div
-            style={{
-              background: "white",
-              padding: "20px",
-              borderRadius: "16px",
-            }}
+            style={cardStyle}
           >
-            <h2>Adicionar Despesa</h2>
+            <h2>
+              Adicionar Despesa
+            </h2>
 
             <input
               placeholder="Descrição"
               value={description}
               onChange={(e) =>
-                setDescription(e.target.value)
+                setDescription(
+                  e.target.value
+                )
               }
               style={inputStyle}
             />
@@ -513,9 +560,9 @@ export default function Home() {
             >
               <option>Casa</option>
               <option>Mercado</option>
-              <option>Transporte</option>
-              <option>Viagem</option>
-              <option>Cartão</option>
+              <option>
+                Transporte
+              </option>
               <option>Lazer</option>
               <option>Saúde</option>
             </select>
@@ -531,15 +578,13 @@ export default function Home() {
             </button>
           </div>
 
-          {/* RECEITA */}
+          {/* RECEITAS */}
           <div
-            style={{
-              background: "white",
-              padding: "20px",
-              borderRadius: "16px",
-            }}
+            style={cardStyle}
           >
-            <h2>Adicionar Receita</h2>
+            <h2>
+              Adicionar Receita
+            </h2>
 
             <input
               placeholder="Descrição"
@@ -556,7 +601,9 @@ export default function Home() {
               placeholder="Valor"
               value={incomeAmount}
               onChange={(e) =>
-                setIncomeAmount(e.target.value)
+                setIncomeAmount(
+                  e.target.value
+                )
               }
               style={inputStyle}
             />
@@ -576,19 +623,21 @@ export default function Home() {
         {/* CARTÃO */}
         <div
           style={{
-            background: "white",
-            padding: "20px",
-            borderRadius: "16px",
+            ...cardStyle,
             marginBottom: "30px",
           }}
         >
-          <h2>Cartão de Crédito 💳</h2>
+          <h2>
+            Cartão de Crédito 💳
+          </h2>
 
           <input
             placeholder="Descrição"
             value={cardDescription}
             onChange={(e) =>
-              setCardDescription(e.target.value)
+              setCardDescription(
+                e.target.value
+              )
             }
             style={inputStyle}
           />
@@ -606,7 +655,9 @@ export default function Home() {
             placeholder="Parcelas"
             value={installments}
             onChange={(e) =>
-              setInstallments(e.target.value)
+              setInstallments(
+                e.target.value
+              )
             }
             style={inputStyle}
           />
@@ -625,15 +676,20 @@ export default function Home() {
         {/* GRAFICO */}
         <div
           style={{
-            background: "white",
-            padding: "20px",
-            borderRadius: "16px",
+            ...cardStyle,
             marginBottom: "30px",
           }}
         >
-          <h2>Gastos por Categoria</h2>
+          <h2>
+            Gastos por Categoria
+          </h2>
 
-          <div style={{ width: "100%", height: 300 }}>
+          <div
+            style={{
+              width: "100%",
+              height: 300,
+            }}
+          >
             <ResponsiveContainer>
               <PieChart>
                 <Pie
@@ -663,6 +719,86 @@ export default function Home() {
             </ResponsiveContainer>
           </div>
         </div>
+
+        {/* LISTA */}
+        <div>
+          <h2
+            style={{
+              marginBottom: "15px",
+            }}
+          >
+            Despesas
+          </h2>
+
+          {filteredExpenses.map(
+            (expense) => (
+              <div
+                key={expense.id}
+                style={{
+                  background: "white",
+                  padding: "16px",
+                  borderRadius: "12px",
+                  marginBottom: "10px",
+                  display: "flex",
+                  justifyContent:
+                    "space-between",
+                  alignItems: "center",
+                  boxShadow:
+                    "0 2px 8px rgba(0,0,0,0.05)",
+                }}
+              >
+                <div>
+                  <strong>
+                    {
+                      expense.description
+                    }
+                  </strong>
+
+                  <p
+                    style={{
+                      color: "#666",
+                    }}
+                  >
+                    {
+                      expense.category
+                    }
+                  </p>
+
+                  <p
+                    style={{
+                      color:
+                        "#e53935",
+                      fontWeight:
+                        "bold",
+                    }}
+                  >
+                    R$ {expense.amount}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() =>
+                    deleteExpense(
+                      expense.id
+                    )
+                  }
+                  style={{
+                    background:
+                      "#ffebee",
+                    border: "none",
+                    color: "#e53935",
+                    padding: "10px",
+                    borderRadius:
+                      "10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  🗑️
+                </button>
+              </div>
+            )
+          )}
+        </div>
       </div>
     </main>
   );
@@ -683,4 +819,12 @@ const buttonStyle = {
   border: "none",
   borderRadius: "8px",
   cursor: "pointer",
+};
+
+const cardStyle = {
+  background: "white",
+  padding: "20px",
+  borderRadius: "16px",
+  boxShadow:
+    "0 2px 10px rgba(0,0,0,0.08)",
 };
