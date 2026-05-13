@@ -67,28 +67,58 @@ export default function Home() {
   }
 
   async function addExpense() {
-    if (!user) {
-      alert("Usuário não encontrado");
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
+    
+    if (!currentUser) {
+      alert("Faça login novamente");
       return;
     }
 
-    const { data: memberData } = await supabase
+    let { data: memberData } = await supabase
       .from("family_members")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", currentUser.id)
       .single();
 
-    if (!memberData) {
-      alert("Família não encontrada");
-      return;
-    }
+      if (!memberData) {
+        const { data: family } = await supabase
+          .from("families")
+          .insert([
+            {
+              name: "Minha Família",
+            },
+          ])
+          .select()
+          .single();
+      
+        if (!family) {
+          alert("Erro ao criar família");
+          return;
+        }
+      
+        await supabase
+          .from("family_members")
+          .insert([
+            {
+              family_id: family.id,
+              user_id: currentUser.id,
+              role: "owner",
+            },
+          ]);
+      
+        memberData = {
+          family_id: family.id,
+        };
+      }
 
     const { error } = await supabase
       .from("expenses")
       .insert([
         {
           family_id: memberData.family_id,
-          user_id: user.id,
+          user_id: currentUser.id,
           description,
           amount: Number(amount),
           category,
@@ -103,7 +133,7 @@ export default function Home() {
       setDescription("");
       setAmount("");
 
-      loadExpenses(user.id);
+      loadExpenses(currentUser.id);
     }
   }
 
@@ -116,7 +146,7 @@ export default function Home() {
     if (error) {
       alert(error.message);
     } else {
-      loadExpenses(user.id);
+      loadExpenses(currentUser.id);
     }
   }
 
