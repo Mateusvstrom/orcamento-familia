@@ -276,35 +276,43 @@ export default function Home() {
   }
 
   async function addExpense() {
-    if (!user) return;
-
-    const { data: memberData } = await supabase
-      .from("family_members")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-
-    if (!memberData) return;
-
+    if (!user) {
+      alert("Usuário não encontrado");
+      return;
+    }
+  
+    const { data: memberData, error: memberError } =
+      await supabase
+        .from("family_members")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+  
+    if (memberError || !memberData) {
+      alert("Erro ao localizar família");
+      return;
+    }
+  
     const { error } = await supabase
       .from("expenses")
       .insert([
         {
           family_id: memberData.family_id,
           user_id: user.id,
-          category,
           description,
-          amount,
-          date: new Date(),
+          amount: Number(amount),
+          category,
+          date: new Date().toISOString(),
         },
       ]);
-
+  
     if (error) {
+      console.log(error);
       alert(error.message);
     } else {
       setDescription("");
       setAmount("");
-
+  
       loadExpenses(user.id);
     }
   }
@@ -733,19 +741,67 @@ export default function Home() {
           {filteredExpenses.map(
             (expense) => (
               <div
-                key={expense.id}
-                style={{
-                  background: "white",
-                  padding: "16px",
-                  borderRadius: "12px",
-                  marginBottom: "10px",
-                  display: "flex",
-                  justifyContent:
-                    "space-between",
-                  alignItems: "center",
-                  boxShadow:
-                    "0 2px 8px rgba(0,0,0,0.05)",
-                }}
+  style={{
+    marginTop: "30px",
+  }}
+>
+  <h2
+    style={{
+      marginBottom: "15px",
+    }}
+  >
+    Despesas
+  </h2>
+
+  {filteredExpenses.length === 0 && (
+    <p>Nenhuma despesa encontrada.</p>
+  )}
+
+  {filteredExpenses.map((expense) => (
+    <div
+      key={expense.id}
+      style={{
+        background: "white",
+        padding: "16px",
+        borderRadius: "12px",
+        marginBottom: "10px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <div>
+        <strong>{expense.description}</strong>
+
+        <p>{expense.category}</p>
+
+        <p
+          style={{
+            color: "red",
+            fontWeight: "bold",
+          }}
+        >
+          R$ {expense.amount}
+        </p>
+      </div>
+
+      <button
+        onClick={() =>
+          deleteExpense(expense.id)
+        }
+        style={{
+          background: "#ffebee",
+          border: "none",
+          padding: "10px",
+          borderRadius: "8px",
+          cursor: "pointer",
+        }}
+      >
+        🗑️
+      </button>
+    </div>
+  ))}
+</div>
               >
                 <div>
                   <strong>
