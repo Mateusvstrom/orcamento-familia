@@ -4,24 +4,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 export default function Home() {
-
-  async function loginAnonimo() {
-    const { data, error } =
-       
-    if (data.user) {
-      setUser(data.user);
-      loadExpenses(data.user.id);
-    }
-  
-    if (error) {
-      console.log(error);
-    }
-  }
-  await supabase.auth.signInAnonymously();
-  
-}
-
-export default function Home() {
   const [user, setUser] = useState<any>(null);
 
   const [description, setDescription] = useState("");
@@ -31,21 +13,34 @@ export default function Home() {
   const [expenses, setExpenses] = useState<any[]>([]);
 
   useEffect(() => {
-    getUser();
+    iniciar();
   }, []);
 
-  async function getUser() {
+  async function iniciar() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-
-    console.log(user);
 
     if (user) {
       setUser(user);
       loadExpenses(user.id);
     } else {
-      await loginAnonimo();
+      loginAnonimo();
+    }
+  }
+
+  async function loginAnonimo() {
+    const { data, error } =
+      await supabase.auth.signInAnonymously();
+
+    if (error) {
+      console.log(error);
+      return;
+    }
+
+    if (data.user) {
+      setUser(data.user);
+      loadExpenses(data.user.id);
     }
   }
 
@@ -72,24 +67,19 @@ export default function Home() {
   }
 
   async function addExpense() {
-    alert("FUNÇÃO EXECUTOU");
-
     if (!user) {
       alert("Usuário não encontrado");
       return;
     }
 
-    const {
-      data: memberData,
-      error: memberError,
-    } = await supabase
+    const { data: memberData } = await supabase
       .from("family_members")
       .select("*")
       .eq("user_id", user.id)
       .single();
 
-    if (memberError || !memberData) {
-      alert("Erro ao localizar família");
+    if (!memberData) {
+      alert("Família não encontrada");
       return;
     }
 
