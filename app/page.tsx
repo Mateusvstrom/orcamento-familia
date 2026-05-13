@@ -582,14 +582,14 @@ export default function Home() {
             </select>
 
             <button
-              onClick={addExpense}
-              style={{
-                ...buttonStyle,
-                background: "#e53935",
-              }}
-            >
-              Adicionar despesa
-            </button>
+  onClick={addExpense}
+  style={{
+    ...buttonStyle,
+    background: "#e53935",
+  }}
+>
+  Adicionar despesa
+</button>
           </div>
 
           {/* RECEITAS */}
