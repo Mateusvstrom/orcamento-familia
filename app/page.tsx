@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+async function loginAnonimo() {
+  await supabase.auth.signInAnonymously();
+  window.location.reload();
+}
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
@@ -27,7 +31,7 @@ export default function Home() {
       setUser(user);
       loadExpenses(user.id);
     } else {
-      alert("Usuário não autenticado");
+      await loginAnonimo();
     }
   }
 
