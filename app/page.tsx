@@ -7,8 +7,7 @@ export default function Home() {
 
   async function loginAnonimo() {
     const { data, error } =
-      await supabase.auth.signInAnonymously();
-  
+       
     if (data.user) {
       setUser(data.user);
       loadExpenses(data.user.id);
