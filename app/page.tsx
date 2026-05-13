@@ -286,7 +286,7 @@ export default function Home() {
     if (!user) {
       alert("Usuário não encontrado");
       return;
-    }
+    
   
     const { data: memberData, error: memberError } =
       await supabase
